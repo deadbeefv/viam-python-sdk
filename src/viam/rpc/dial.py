@@ -180,7 +180,11 @@ class _Runtime:
 
     def __init__(self) -> None:
         LOGGER.debug("Creating new viam-rust-utils runtime")
-        libname = pathlib.Path(__file__).parent.absolute() / f"libviam_rust_utils.{'dylib' if sys.platform == 'darwin' else 'dll' if sys.platform == 'win32' else 'so'}"
+        libname = ""
+        if sys.platform == "win32":
+            libname = pathlib.Path(__file__).parent.absolute() / f"libviam_rust_utils.dll"
+        else:
+            libname = pathlib.Path(__file__).parent.absolute() / f"libviam_rust_utils.{'dylib' if sys.platform == 'darwin' else 'so'}"
         self._lib = ctypes.CDLL(libname.__str__())
         self._lib.init_rust_runtime.argtypes = ()
         self._lib.init_rust_runtime.restype = ctypes.c_void_p
@@ -229,6 +233,7 @@ async def dial(address: str, options: Optional[DialOptions] = None) -> ViamChann
         return ViamChannel(channel, lambda: None)
     runtime = _Runtime()
     path, path_ptr = await runtime.dial(address, opts)
+    print("Path is: {}\n Path pointer is {}".format(path, path_ptr))
     if path:
         LOGGER.info(f"Connecting to socket: {path}")
         chan = Channel(path=path, ssl=None)
